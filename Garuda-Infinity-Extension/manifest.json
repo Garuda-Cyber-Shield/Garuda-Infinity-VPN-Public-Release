@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Garuda Infinity",
   "short_name": "Garuda Infinity",
-  "version": "1.0.2",
-  "description": "Garuda Infinity V1.0.2 — Global 3D Browser VPN & Encrypted Proxy Extension with 82+ Countries and 4K Streaming by Garuda Cyber Shield.",
+  "version": "1.1.0",
+  "description": "Garuda Infinity V1.1.0 — Global 3D Browser VPN & Encrypted Proxy Extension with 82+ Countries and 4K Streaming by Garuda Cyber Shield.",
   "author": "QUICKSILVER",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0ZEkw8BbE/KmfOEdTomz0NpfUQqlPeB05lVaEcoSuDKBN/AXP68BZQix6C1pfqRJfVtcY/bOjleGNUJebIgXwGF4S0QpMnPc+9cYTlbRQNH4YjdGNH0aCFL0tLqBJRsFaXdD5qGynuGCS/RhntxvaEXd38iHOaGL7fzIBM2m8C8lKmLH1xA0FXiWP984Hv0eMHKQkD1RursSgYajFGBmKFqyqPRtH5QkBAMmZkxZrVn8XQjPdkYUVpM/HTRBJZO6zQzPQwsBB4zT67qVysuoysoueKtpwWBl9S/un5GPNvaxb6jlru283ZGzKBVZUw2T8ySxkIoWRuOnAwMEhXfXiQIDAQAB",
   "icons": {
@@ -12,7 +12,7 @@
     "128": "icons/icon-512.png"
   },
   "action": {
-    "default_title": "Garuda Infinity — V1.0.2",
+    "default_title": "Garuda Infinity — V1.1.0",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon-192.png",
