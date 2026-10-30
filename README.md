@@ -6,7 +6,7 @@
 
 Official binary distribution repository for **Garuda Infinity** (Android Mobile VPN APK & Chromium MV3 Browser Extension).
 
-- **Latest Android App Version**: `V1.1.0` (`versionCode 1010`)
+- **Latest Android App Version**: `V1.1.1` (`versionCode 1011`)
 - **Latest Browser Extension Version**: `V1.1.0`
 - **Release Date**: `2026-10-30`
 - **Organization**: [**Garuda Cyber Shield**](https://garudacybershield.org/)
@@ -19,9 +19,9 @@ Official binary distribution repository for **Garuda Infinity** (Android Mobile 
 
 | Platform | Package File | Version | Description |
 | :--- | :--- | :--- | :--- |
-| **Android (8.0 Oreo to Latest 15/16+)** | [**`Garuda-Infinity.apk`**](./Garuda-Infinity.apk) | `V1.1.0` | Signed native Android System VPN (`android.net.VpnService` + Layer-3 `Tun2HttpProxyEngine`) supporting Android 8.0 (API 26) through Android 16+, with interactive 3D Globe Dashboard & live notification telemetry |
+| **Android (8.0 Oreo to Latest 15/16+)** | [**`Garuda-Infinity.apk`**](./Garuda-Infinity.apk) | `V1.1.1` | Signed native Android System VPN (`android.net.VpnService` + Layer-3 `Tun2HttpProxyEngine`) supporting Android 8.0 (API 26) through Android 16+, with interactive 3D Globe Dashboard & live notification telemetry |
 | **Chrome / Edge / Brave / Opera** | [**`Garuda-Infinity-Extension.zip`**](./Garuda-Infinity-Extension.zip) | `V1.1.0` | Standalone Manifest V3 Browser Extension with 4-segment popup, 82+ real exit countries, 3-tier gateway credential caching, and zero-leak WebRTC protection |
-| **OTA Version Manifest** | [**`version.json`**](./version.json) | `V1.1.0` | Live OTA version metadata used by the Extension and Android App auto-updater |
+| **OTA Version Manifest** | [**`version.json`**](./version.json) | `V1.1.1` | Live OTA version metadata used by the Extension and Android App auto-updater |
 
 ---
 

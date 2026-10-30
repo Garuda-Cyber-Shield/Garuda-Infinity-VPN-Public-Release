@@ -1,8 +1,8 @@
 {
-  "version": "1.1.0",
-  "appVersion": "1.1.0",
+  "version": "1.1.1",
+  "appVersion": "1.1.1",
   "extensionVersion": "1.1.0",
-  "versionCode": 1010,
+  "versionCode": 1011,
   "releaseDate": "2026-10-30",
   "forceUpdate": false,
   "forceUpdateApp": false,
@@ -17,5 +17,5 @@
   "extensionDownloadFileName": "Garuda-Infinity-Extension.zip",
   "apkUrl": "https://raw.githubusercontent.com/Garuda-Cyber-Shield/Garuda-Infinity-VPN-Public-Release/main/Garuda-Infinity.apk",
   "apkDownloadFileName": "Garuda-Infinity.apk",
-  "notes": "Garuda Infinity V1.1.0 Official Release — Garuda Cyber Shield."
+  "notes": "Garuda Infinity V1.1.1 Official Release — Garuda Cyber Shield."
 }
