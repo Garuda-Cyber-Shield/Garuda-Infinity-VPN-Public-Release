@@ -1,0 +1,54 @@
+{
+  "manifest_version": 3,
+  "name": "Garuda Infinity",
+  "short_name": "Garuda Infinity",
+  "version": "1.0.2",
+  "description": "Garuda Infinity V1.0.2 — Global 3D Browser VPN & Encrypted Proxy Extension with 82+ Countries and 4K Streaming by Garuda Cyber Shield.",
+  "author": "QUICKSILVER",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0ZEkw8BbE/KmfOEdTomz0NpfUQqlPeB05lVaEcoSuDKBN/AXP68BZQix6C1pfqRJfVtcY/bOjleGNUJebIgXwGF4S0QpMnPc+9cYTlbRQNH4YjdGNH0aCFL0tLqBJRsFaXdD5qGynuGCS/RhntxvaEXd38iHOaGL7fzIBM2m8C8lKmLH1xA0FXiWP984Hv0eMHKQkD1RursSgYajFGBmKFqyqPRtH5QkBAMmZkxZrVn8XQjPdkYUVpM/HTRBJZO6zQzPQwsBB4zT67qVysuoysoueKtpwWBl9S/un5GPNvaxb6jlru283ZGzKBVZUw2T8ySxkIoWRuOnAwMEhXfXiQIDAQAB",
+  "icons": {
+    "16": "icons/icon-192.png",
+    "48": "icons/icon-192.png",
+    "128": "icons/icon-512.png"
+  },
+  "action": {
+    "default_title": "Garuda Infinity — V1.0.2",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-192.png",
+      "48": "icons/icon-192.png",
+      "128": "icons/icon-512.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "proxy",
+    "storage",
+    "webRequest",
+    "webRequestAuthProvider",
+    "privacy",
+    "alarms",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; base-uri 'self'; img-src 'self' data: https:; connect-src 'self' https:;"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:*/*",
+        "http://127.0.0.1:*/*",
+        "https://*.vercel.app/*"
+      ],
+      "js": [
+        "content-bridge.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}

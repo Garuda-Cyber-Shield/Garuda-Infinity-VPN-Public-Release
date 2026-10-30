@@ -1,0 +1,2081 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Garuda Infinity — Standalone Browser VPN</title>
+<link rel="icon" type="image/svg+xml" href="garuda-favicon.svg" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<style>
+:root,
+[data-theme="dark"] {
+--bg-canvas: radial-gradient(circle at 50% 28%, #0f2147 0%, #070b19 64%, #040711 100%);
+--surface-panel: rgba(10, 15, 30, 0.96);
+--surface-glass: rgba(15, 23, 42, 0.82);
+--surface-card: rgba(30, 41, 59, 0.62);
+--surface-hover: rgba(51, 65, 85, 0.58);
+--surface-selected: rgba(59, 130, 246, 0.22);
+--surface-connected: rgba(16, 185, 129, 0.18);
+--border: rgba(148, 163, 184, 0.16);
+--border-strong: rgba(148, 163, 184, 0.28);
+--divider: rgba(148, 163, 184, 0.12);
+--primary: #3b82f6;
+--primary-hover: #2563eb;
+--emerald: #10b981;
+--emerald-bright: #34d399;
+--danger: #f43f5e;
+--warning: #f59e0b;
+--text-heading: #f8fafc;
+--text-body: #e2e8f0;
+--text-secondary: #94a3b8;
+--text-muted: #64748b;
+--shadow-card: 0 12px 30px rgba(2, 6, 23, 0.55);
+}
+[data-theme="light"] {
+--bg-canvas: radial-gradient(circle at 50% 28%, #dbeafe 0%, #eff6ff 62%, #e2e8f0 100%);
+--surface-panel: rgba(255, 255, 255, 0.96);
+--surface-glass: rgba(255, 255, 255, 0.88);
+--surface-card: rgba(241, 245, 249, 0.92);
+--surface-hover: rgba(226, 232, 240, 0.8);
+--surface-selected: rgba(37, 99, 235, 0.14);
+--surface-connected: rgba(16, 185, 129, 0.14);
+--border: rgba(148, 163, 184, 0.28);
+--border-strong: rgba(100, 116, 139, 0.36);
+--divider: rgba(203, 213, 225, 0.75);
+--primary: #2563eb;
+--primary-hover: #1d4ed8;
+--emerald: #059669;
+--emerald-bright: #10b981;
+--danger: #e11d48;
+--warning: #d97706;
+--text-heading: #0f172a;
+--text-body: #1e293b;
+--text-secondary: #475569;
+--text-muted: #64748b;
+--shadow-card: 0 10px 24px rgba(15, 23, 42, 0.1);
+}
+* {
+box-sizing: border-box;
+margin: 0;
+padding: 0;
+user-select: none;
+}
+html {
+width: 410px;
+height: 600px;
+}
+body {
+width: 410px;
+min-width: 410px;
+height: 600px;
+min-height: 600px;
+overflow: hidden;
+background: var(--bg-canvas);
+color: var(--text-heading);
+font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+display: flex;
+flex-direction: column;
+position: relative;
+}
+html.is-mobile-ext,
+html.is-mobile-ext body {
+width: 100%;
+min-width: 100%;
+height: 100vh;
+height: 100dvh;
+min-height: 100dvh;
+}
+/* Scrollbar */
+::-webkit-scrollbar {
+width: 5px;
+}
+::-webkit-scrollbar-track {
+background: transparent;
+}
+::-webkit-scrollbar-thumb {
+background: rgba(148, 163, 184, 0.3);
+border-radius: 3px;
+}
+@keyframes spinFast {
+from { transform: rotate(0deg); }
+to { transform: rotate(360deg); }
+}
+@keyframes pulseHalo {
+0%, 100% { transform: scale(0.96); opacity: 0.78; }
+50% { transform: scale(1.05); opacity: 0.36; }
+}
+.spin-fast {
+animation: spinFast 1s linear infinite;
+}
+.pulse-halo {
+animation: pulseHalo 2.5s ease-in-out infinite;
+}
+/* Top Header */
+.top-header {
+height: 50px;
+padding: 0 12px;
+background: var(--surface-panel);
+border-bottom: 1px solid var(--border);
+display: flex;
+align-items: center;
+justify-content: space-between;
+flex-shrink: 0;
+z-index: 20;
+}
+.brand-wrap {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+.brand-logo {
+width: 26px;
+height: 26px;
+}
+.brand-title {
+font-size: 13px;
+font-weight: 800;
+letter-spacing: 0.4px;
+line-height: 1.1;
+white-space: nowrap;
+}
+.brand-sub {
+font-size: 9.5px;
+color: var(--text-secondary);
+font-weight: 600;
+white-space: nowrap;
+}
+.header-actions {
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.status-pill {
+font-size: 9.5px;
+font-weight: 800;
+padding: 3px 8px;
+border-radius: 999px;
+letter-spacing: 0.3px;
+}
+.status-on {
+background: rgba(16, 185, 129, 0.18);
+color: #34d399;
+border: 1px solid rgba(16, 185, 129, 0.42);
+}
+.status-busy {
+background: rgba(59, 130, 246, 0.18);
+color: #60a5fa;
+border: 1px solid rgba(59, 130, 246, 0.42);
+}
+.status-off {
+background: rgba(244, 63, 94, 0.15);
+color: #fb7185;
+border: 1px solid rgba(244, 63, 94, 0.35);
+}
+[data-theme="light"] .status-on {
+background: rgba(16, 185, 129, 0.14);
+color: #047857;
+border-color: rgba(5, 150, 105, 0.38);
+}
+[data-theme="light"] .status-busy {
+background: rgba(37, 99, 235, 0.14);
+color: #1d4ed8;
+border-color: rgba(37, 99, 235, 0.38);
+}
+[data-theme="light"] .status-off {
+background: rgba(225, 29, 72, 0.12);
+color: #be123c;
+border-color: rgba(225, 29, 72, 0.35);
+}
+.icon-btn {
+width: 28px;
+height: 28px;
+border-radius: 8px;
+border: 1px solid var(--border);
+background: var(--surface-card);
+color: var(--text-body);
+display: inline-flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+font-size: 13px;
+transition: border-color 0.15s, background 0.15s;
+}
+.icon-btn:hover {
+border-color: var(--primary);
+}
+/* Main Viewport */
+.segment-viewport {
+flex: 1;
+overflow: hidden;
+position: relative;
+display: flex;
+flex-direction: column;
+}
+.segment-pane {
+display: none;
+flex: 1;
+height: 100%;
+overflow-y: auto;
+flex-direction: column;
+}
+.segment-pane.active {
+display: flex;
+}
+/* Segment 1: Tunnel & 3D Globe Stage */
+.tunnel-stage {
+position: relative;
+flex: 1;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+padding: 10px 12px 12px 12px;
+overflow: hidden;
+}
+#globeCanvas {
+position: absolute;
+inset: 0;
+width: 100%;
+height: 100%;
+z-index: 1;
+cursor: grab;
+}
+#globeCanvas:active {
+cursor: grabbing;
+}
+.hud-top-row {
+position: relative;
+z-index: 5;
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+.route-bar {
+background: var(--surface-glass);
+backdrop-filter: blur(12px);
+border: 1px solid var(--border);
+border-radius: 12px;
+padding: 6px 10px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 6px;
+box-shadow: var(--shadow-card);
+}
+.route-endpoint {
+display: flex;
+align-items: center;
+gap: 6px;
+min-width: 0;
+}
+.route-flag {
+width: 18px;
+height: 18px;
+border-radius: 50%;
+object-fit: cover;
+border: 1px solid var(--border-strong);
+flex-shrink: 0;
+}
+.route-meta {
+display: flex;
+flex-direction: column;
+min-width: 0;
+}
+.route-label {
+font-size: 8.5px;
+font-weight: 700;
+text-transform: uppercase;
+color: var(--text-secondary);
+letter-spacing: 0.3px;
+}
+.route-ip {
+font-size: 11px;
+font-weight: 700;
+color: var(--text-heading);
+font-variant-numeric: tabular-nums;
+}
+.verify-mini-btn {
+padding: 4px 8px;
+border-radius: 7px;
+border: 1px solid rgba(59, 130, 246, 0.4);
+background: rgba(59, 130, 246, 0.16);
+color: var(--text-heading);
+font-size: 10px;
+font-weight: 600;
+cursor: pointer;
+flex-shrink: 0;
+}
+.camera-bar {
+display: flex;
+justify-content: center;
+gap: 4px;
+}
+.cam-pill {
+height: 22px;
+padding: 0 9px;
+border-radius: 999px;
+border: 1px solid var(--border);
+background: var(--surface-glass);
+color: var(--text-secondary);
+font-size: 10px;
+font-weight: 600;
+cursor: pointer;
+}
+.cam-pill.active {
+background: var(--primary);
+border-color: var(--primary);
+color: #ffffff;
+}
+/* Connect Console Bottom Card */
+.connect-console {
+position: relative;
+z-index: 5;
+background: var(--surface-glass);
+backdrop-filter: blur(14px);
+border: 1px solid var(--border);
+border-radius: 18px;
+padding: 12px 14px;
+display: flex;
+flex-direction: column;
+align-items: center;
+box-shadow: var(--shadow-card);
+}
+.hero-btn-wrap {
+position: relative;
+width: 92px;
+height: 92px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.hero-ring-img {
+position: absolute;
+width: 92px;
+height: 92px;
+pointer-events: none;
+}
+.hero-core-btn {
+width: 58px;
+height: 58px;
+border-radius: 50%;
+background: #ffffff;
+border: 2px solid rgba(59, 130, 246, 0.4);
+display: flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+position: relative;
+z-index: 3;
+box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+transition: transform 0.12s, box-shadow 0.15s;
+}
+.hero-core-btn:hover {
+transform: scale(1.04);
+}
+.hero-core-btn img {
+width: 24px;
+height: 24px;
+}
+.console-status-row {
+margin-top: 6px;
+display: flex;
+align-items: center;
+gap: 7px;
+}
+.status-dot {
+width: 9px;
+height: 9px;
+border-radius: 50%;
+background: var(--danger);
+}
+.status-dot.connected {
+background: var(--emerald);
+box-shadow: 0 0 10px rgba(16, 185, 129, 0.85);
+}
+.console-headline {
+font-size: 16px;
+font-weight: 800;
+letter-spacing: -0.2px;
+}
+.telemetry-row {
+margin-top: 4px;
+display: flex;
+align-items: center;
+gap: 12px;
+font-size: 11.5px;
+color: var(--text-secondary);
+font-variant-numeric: tabular-nums;
+}
+.timer-text {
+font-size: 13px;
+font-weight: 700;
+color: var(--text-heading);
+}
+.target-country-btn {
+margin-top: 9px;
+width: 100%;
+height: 46px;
+padding: 0 12px;
+border-radius: 12px;
+background: var(--surface-card);
+border: 1px solid var(--border-strong);
+display: flex;
+align-items: center;
+justify-content: space-between;
+cursor: pointer;
+color: var(--text-heading);
+transition: border-color 0.15s;
+}
+.target-country-btn:hover {
+border-color: var(--primary);
+}
+.target-left {
+display: flex;
+align-items: center;
+gap: 10px;
+min-width: 0;
+}
+.target-flag {
+width: 28px;
+height: 28px;
+border-radius: 50%;
+object-fit: cover;
+border: 1px solid var(--border-strong);
+}
+.target-name {
+font-size: 13px;
+font-weight: 700;
+text-align: left;
+}
+.target-sub {
+font-size: 10px;
+color: var(--text-secondary);
+text-align: left;
+}
+.target-right {
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.tag-4k {
+font-size: 9px;
+font-weight: 700;
+padding: 2px 6px;
+border-radius: 5px;
+background: rgba(59, 130, 246, 0.2);
+color: #60a5fa;
+}
+[data-theme="light"] .tag-4k {
+background: rgba(37, 99, 235, 0.14);
+color: #1d4ed8;
+}
+.ping-badge {
+font-size: 11px;
+font-weight: 700;
+color: #34d399;
+}
+[data-theme="light"] .ping-badge {
+color: #059669;
+}
+.console-footer {
+margin-top: 7px;
+width: 100%;
+display: flex;
+align-items: center;
+justify-content: space-between;
+font-size: 10px;
+color: var(--text-secondary);
+}
+.link-btn {
+background: none;
+border: none;
+color: #38bdf8;
+font-size: 10px;
+font-weight: 700;
+cursor: pointer;
+}
+[data-theme="light"] .link-btn {
+color: #0284c7;
+}
+/* Segment 2: Countries */
+.countries-header {
+padding: 10px 12px 8px 12px;
+border-bottom: 1px solid var(--divider);
+background: var(--surface-panel);
+}
+.countries-top-bar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 8px;
+}
+.countries-title {
+font-size: 13.5px;
+font-weight: 700;
+}
+.catalog-toggle-btn {
+font-size: 10px;
+font-weight: 700;
+padding: 4px 8px;
+border-radius: 8px;
+border: 1px solid var(--border-strong);
+background: var(--surface-card);
+color: var(--text-body);
+cursor: pointer;
+}
+.catalog-toggle-btn.active {
+background: var(--primary);
+border-color: var(--primary);
+color: #ffffff;
+}
+.search-box {
+height: 34px;
+background: var(--surface-card);
+border: 1px solid var(--border-strong);
+border-radius: 9px;
+padding: 0 10px;
+display: flex;
+align-items: center;
+gap: 7px;
+}
+.search-box input {
+flex: 1;
+background: transparent;
+border: none;
+outline: none;
+color: var(--text-heading);
+font-size: 12px;
+}
+.clear-search-btn {
+background: none;
+border: none;
+color: var(--text-secondary);
+cursor: pointer;
+font-size: 13px;
+display: none;
+}
+.mode-tabs {
+display: flex;
+gap: 4px;
+margin-top: 7px;
+background: var(--surface-card);
+padding: 3px;
+border-radius: 8px;
+border: 1px solid var(--border);
+}
+.mode-tab {
+flex: 1;
+height: 28px;
+border: none;
+border-radius: 6px;
+background: transparent;
+color: var(--text-secondary);
+font-size: 11px;
+font-weight: 600;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 6px;
+transition: background 0.15s, color 0.15s;
+}
+.mode-tab svg {
+width: 13px;
+height: 13px;
+flex-shrink: 0;
+}
+.mode-tab.active {
+background: var(--primary);
+color: #ffffff;
+}
+.region-pills {
+display: flex;
+gap: 4px;
+margin-top: 7px;
+overflow-x: auto;
+}
+.region-pill {
+font-size: 10px;
+font-weight: 600;
+padding: 3px 8px;
+border-radius: 999px;
+border: 1px solid var(--border);
+background: var(--surface-card);
+color: var(--text-secondary);
+cursor: pointer;
+white-space: nowrap;
+}
+.region-pill.active {
+border-color: var(--primary);
+background: rgba(59, 130, 246, 0.2);
+color: #60a5fa;
+}
+[data-theme="light"] .region-pill.active {
+border-color: var(--primary);
+background: rgba(37, 99, 235, 0.14);
+color: #1d4ed8;
+}
+.countries-list {
+flex: 1;
+overflow-y: auto;
+padding: 6px 10px 12px 10px;
+}
+.country-row {
+display: flex;
+align-items: center;
+padding: 7px 10px;
+border-radius: 10px;
+border: 1px solid transparent;
+cursor: pointer;
+margin-bottom: 4px;
+transition: background 0.12s, border-color 0.12s;
+}
+.country-row:hover {
+background: var(--surface-hover);
+border-color: var(--border);
+}
+.country-row.selected {
+background: var(--surface-selected);
+border-color: rgba(59, 130, 246, 0.45);
+}
+.country-row.connected {
+background: var(--surface-connected);
+border-color: rgba(16, 185, 129, 0.5);
+}
+.country-row-flag {
+width: 26px;
+height: 26px;
+border-radius: 50%;
+object-fit: cover;
+border: 1px solid var(--border-strong);
+margin-right: 10px;
+flex-shrink: 0;
+}
+.country-row-info {
+flex: 1;
+min-width: 0;
+}
+.country-row-title {
+display: flex;
+align-items: center;
+gap: 5px;
+}
+.country-row-name {
+font-size: 12.5px;
+font-weight: 700;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+.country-row-badge {
+font-size: 8.5px;
+font-weight: 700;
+padding: 1px 5px;
+border-radius: 4px;
+background: rgba(148, 163, 184, 0.15);
+color: var(--text-secondary);
+}
+.country-row-badge.pro {
+background: rgba(59, 130, 246, 0.2);
+color: #60a5fa;
+}
+[data-theme="light"] .country-row-badge.pro {
+background: rgba(37, 99, 235, 0.14);
+color: #1d4ed8;
+}
+.country-row-meta {
+font-size: 10px;
+color: var(--text-secondary);
+margin-top: 1px;
+}
+.country-row-action {
+font-size: 10px;
+font-weight: 700;
+padding: 3px 8px;
+border-radius: 999px;
+background: rgba(59, 130, 246, 0.14);
+color: #60a5fa;
+flex-shrink: 0;
+}
+[data-theme="light"] .country-row-action {
+background: rgba(37, 99, 235, 0.12);
+color: #1d4ed8;
+}
+.country-row.connected .country-row-action {
+background: rgba(16, 185, 129, 0.22);
+color: #34d399;
+}
+[data-theme="light"] .country-row.connected .country-row-action {
+background: rgba(16, 185, 129, 0.18);
+color: #047857;
+}
+/* Segment 3 & 4 Cards */
+#seg-ipconfig {
+overflow: hidden;
+}
+.ipconfig-header {
+padding: 10px 12px 8px 12px;
+border-bottom: 1px solid var(--divider);
+background: var(--surface-panel);
+flex-shrink: 0;
+}
+.pane-body {
+padding: 12px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+flex: 1;
+overflow-y: auto;
+}
+.sub-tabs {
+display: flex;
+gap: 4px;
+background: var(--surface-card);
+padding: 3px;
+border-radius: 9px;
+border: 1px solid var(--border-strong);
+}
+.sub-tab {
+flex: 1;
+height: 30px;
+border: none;
+border-radius: 6px;
+background: transparent;
+color: var(--text-secondary);
+font-size: 11px;
+font-weight: 700;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 6px;
+transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.sub-tab svg {
+width: 13px;
+height: 13px;
+flex-shrink: 0;
+}
+.sub-tab.active {
+background: var(--primary);
+color: #ffffff;
+box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28);
+}
+.ip-hero-banner {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+padding: 10px 11px;
+border-radius: 10px;
+background: var(--surface-card);
+border: 1px solid var(--border-strong);
+margin-bottom: 9px;
+}
+.ip-hero-left {
+display: flex;
+align-items: center;
+gap: 10px;
+min-width: 0;
+}
+.ip-time-pill {
+text-align: right;
+padding-left: 10px;
+border-left: 1px solid var(--divider);
+flex-shrink: 0;
+}
+.ip-time-label {
+font-size: 8.5px;
+font-weight: 800;
+letter-spacing: 0.4px;
+color: #38bdf8;
+text-transform: uppercase;
+}
+[data-theme="light"] .ip-time-label {
+color: #0284c7;
+}
+.ip-time-value {
+font-size: 11.5px;
+font-weight: 800;
+color: var(--text-heading);
+font-variant-numeric: tabular-nums;
+margin-top: 1px;
+white-space: nowrap;
+}
+.ip-time-zone {
+font-size: 9.5px;
+font-weight: 600;
+color: var(--text-secondary);
+margin-top: 1px;
+white-space: nowrap;
+}
+.glass-card {
+background: var(--surface-glass);
+border: 1px solid var(--border);
+border-radius: 12px;
+padding: 12px;
+box-shadow: var(--shadow-card);
+}
+[data-theme="light"] .glass-card {
+background: #ffffff;
+border-color: rgba(148, 163, 184, 0.34);
+box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+.card-label {
+font-size: 10px;
+font-weight: 700;
+text-transform: uppercase;
+color: var(--text-secondary);
+letter-spacing: 0.4px;
+margin-bottom: 8px;
+}
+.kv-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 7px;
+font-size: 11px;
+}
+.kv-box {
+background: var(--surface-card);
+border: 1px solid var(--border);
+border-radius: 8px;
+padding: 7px 9px;
+}
+[data-theme="light"] .kv-box {
+background: #f8fafc;
+border-color: rgba(148, 163, 184, 0.28);
+}
+.kv-box .k {
+font-size: 9.5px;
+font-weight: 600;
+color: var(--text-secondary);
+display: block;
+}
+.kv-box .v {
+font-size: 11.5px;
+font-weight: 700;
+color: var(--text-heading);
+margin-top: 2px;
+display: block;
+word-break: break-word;
+}
+.btn-primary {
+height: 34px;
+padding: 0 12px;
+border-radius: 9px;
+border: none;
+background: linear-gradient(135deg, #3b82f6, #2563eb);
+color: #ffffff;
+font-size: 11.5px;
+font-weight: 700;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 6px;
+box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+.btn-secondary {
+height: 32px;
+padding: 0 12px;
+border-radius: 8px;
+border: 1px solid var(--border-strong);
+background: var(--surface-card);
+color: var(--text-heading);
+font-size: 11px;
+font-weight: 600;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 5px;
+white-space: nowrap;
+flex-shrink: 0;
+}
+/* Verification Status Banner (No JSON) */
+.verify-status-banner {
+margin-top: 9px;
+padding: 8.5px 10px;
+border-radius: 9px;
+background: rgba(15, 23, 42, 0.78);
+border: 1px solid rgba(148, 163, 184, 0.28);
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 10.5px;
+font-weight: 600;
+color: #e2e8f0;
+line-height: 1.4;
+}
+[data-theme="light"] .verify-status-banner {
+background: #f1f5f9;
+border: 1px solid rgba(100, 116, 139, 0.32);
+color: #334155;
+}
+.verify-status-banner.verified-ok {
+background: rgba(16, 185, 129, 0.14);
+border-color: rgba(16, 185, 129, 0.42);
+color: #ecfdf5;
+}
+[data-theme="light"] .verify-status-banner.verified-ok {
+background: rgba(16, 185, 129, 0.12);
+border-color: rgba(5, 150, 105, 0.42);
+color: #064e3b;
+}
+.verify-status-banner svg {
+width: 15px;
+height: 15px;
+flex-shrink: 0;
+color: #34d399;
+}
+[data-theme="light"] .verify-status-banner svg {
+color: #059669;
+}
+/* Improved Cyber Telemetry Log UI */
+.logs-toolbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+margin-bottom: 8px;
+}
+.logs-title-group {
+display: flex;
+align-items: center;
+gap: 6px;
+}
+.logs-title-group svg {
+width: 14px;
+height: 14px;
+color: #60a5fa;
+}
+[data-theme="light"] .logs-title-group svg {
+color: #2563eb;
+}
+.logs-count-pill {
+font-size: 9.5px;
+font-weight: 700;
+padding: 2px 7px;
+border-radius: 999px;
+background: rgba(59, 130, 246, 0.16);
+border: 1px solid rgba(59, 130, 246, 0.35);
+color: #60a5fa;
+white-space: nowrap;
+}
+[data-theme="light"] .logs-count-pill {
+background: rgba(37, 99, 235, 0.12);
+border-color: rgba(37, 99, 235, 0.32);
+color: #1d4ed8;
+}
+.logs-clear-btn {
+height: 24px;
+padding: 0 8px;
+border-radius: 6px;
+border: 1px solid var(--border-strong);
+background: var(--surface-card);
+color: var(--text-secondary);
+font-size: 10px;
+font-weight: 600;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+gap: 4px;
+white-space: nowrap;
+flex-shrink: 0;
+transition: color 0.15s, border-color 0.15s;
+}
+.logs-clear-btn:hover {
+color: #fb7185;
+border-color: rgba(244, 63, 94, 0.45);
+}
+[data-theme="light"] .logs-clear-btn:hover {
+color: #be123c;
+border-color: rgba(225, 29, 72, 0.45);
+}
+.logs-clear-btn svg {
+width: 11px;
+height: 11px;
+}
+.logs-filter-bar {
+display: flex;
+gap: 4px;
+margin-bottom: 8px;
+}
+.log-filter-pill {
+height: 23px;
+padding: 0 8px;
+border-radius: 999px;
+border: 1px solid var(--border);
+background: var(--surface-card);
+color: var(--text-secondary);
+font-size: 10px;
+font-weight: 600;
+cursor: pointer;
+white-space: nowrap;
+}
+.log-filter-pill.active {
+border-color: var(--primary);
+background: rgba(59, 130, 246, 0.2);
+color: #60a5fa;
+}
+[data-theme="light"] .log-filter-pill.active {
+border-color: var(--primary);
+background: rgba(37, 99, 235, 0.14);
+color: #1d4ed8;
+}
+.logs-list {
+display: flex;
+flex-direction: column;
+gap: 6px;
+max-height: 315px;
+overflow-y: auto;
+padding-right: 2px;
+}
+.log-card {
+background: var(--surface-card);
+border: 1px solid var(--border);
+border-left: 3px solid #3b82f6;
+border-radius: 8px;
+padding: 7px 9px;
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+[data-theme="light"] .log-card {
+background: #f8fafc;
+border-color: rgba(148, 163, 184, 0.3);
+border-left: 3px solid #2563eb;
+}
+.log-card.tone-emerald {
+border-left-color: #10b981;
+background: rgba(16, 185, 129, 0.07);
+}
+[data-theme="light"] .log-card.tone-emerald {
+border-left-color: #059669;
+background: rgba(16, 185, 129, 0.08);
+}
+.log-card.tone-cyan {
+border-left-color: #06b6d4;
+}
+[data-theme="light"] .log-card.tone-cyan {
+border-left-color: #0284c7;
+background: rgba(2, 132, 199, 0.06);
+}
+.log-card.tone-rose {
+border-left-color: #f43f5e;
+background: rgba(244, 63, 94, 0.06);
+}
+[data-theme="light"] .log-card.tone-rose {
+border-left-color: #e11d48;
+background: rgba(225, 29, 72, 0.06);
+}
+.log-card.tone-amber {
+border-left-color: #f59e0b;
+}
+[data-theme="light"] .log-card.tone-amber {
+border-left-color: #d97706;
+background: rgba(217, 119, 6, 0.06);
+}
+.log-card.tone-purple {
+border-left-color: #a855f7;
+}
+[data-theme="light"] .log-card.tone-purple {
+border-left-color: #7c3aed;
+background: rgba(124, 58, 237, 0.06);
+}
+.log-card-top {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 6px;
+}
+.log-tag-badge {
+display: inline-flex;
+align-items: center;
+gap: 4px;
+font-size: 9px;
+font-weight: 800;
+text-transform: uppercase;
+letter-spacing: 0.35px;
+padding: 1.5px 6px;
+border-radius: 4px;
+background: rgba(59, 130, 246, 0.18);
+color: #60a5fa;
+}
+[data-theme="light"] .log-tag-badge {
+background: rgba(37, 99, 235, 0.14);
+color: #1d4ed8;
+}
+.log-tag-badge svg {
+width: 10px;
+height: 10px;
+}
+.log-tag-badge.tone-emerald {
+background: rgba(16, 185, 129, 0.2);
+color: #34d399;
+}
+[data-theme="light"] .log-tag-badge.tone-emerald {
+background: rgba(16, 185, 129, 0.16);
+color: #047857;
+}
+.log-tag-badge.tone-cyan {
+background: rgba(6, 182, 212, 0.2);
+color: #22d3ee;
+}
+[data-theme="light"] .log-tag-badge.tone-cyan {
+background: rgba(2, 132, 199, 0.14);
+color: #0369a1;
+}
+.log-tag-badge.tone-rose {
+background: rgba(244, 63, 94, 0.2);
+color: #fb7185;
+}
+[data-theme="light"] .log-tag-badge.tone-rose {
+background: rgba(225, 29, 72, 0.14);
+color: #be123c;
+}
+.log-tag-badge.tone-amber {
+background: rgba(245, 158, 11, 0.2);
+color: #fbbf24;
+}
+[data-theme="light"] .log-tag-badge.tone-amber {
+background: rgba(217, 119, 6, 0.15);
+color: #b45309;
+}
+.log-tag-badge.tone-purple {
+background: rgba(168, 85, 247, 0.2);
+color: #c084fc;
+}
+[data-theme="light"] .log-tag-badge.tone-purple {
+background: rgba(124, 58, 237, 0.14);
+color: #6d28d9;
+}
+.log-time {
+font-family: Consolas, "SFMono-Regular", monospace;
+font-size: 9.5px;
+font-weight: 600;
+color: var(--text-secondary);
+font-variant-numeric: tabular-nums;
+}
+.log-msg {
+font-size: 11px;
+color: var(--text-body);
+line-height: 1.4;
+word-break: break-word;
+user-select: text;
+}
+.log-ip-chip {
+display: inline-block;
+font-family: Consolas, monospace;
+font-size: 10px;
+font-weight: 700;
+padding: 0 5px;
+border-radius: 4px;
+background: rgba(56, 189, 248, 0.14);
+border: 1px solid rgba(56, 189, 248, 0.3);
+color: #38bdf8;
+}
+[data-theme="light"] .log-ip-chip {
+background: rgba(2, 132, 199, 0.12);
+border-color: rgba(2, 132, 199, 0.3);
+color: #0369a1;
+}
+/* Settings rows */
+.setting-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+padding: 8px 0;
+border-bottom: 1px solid var(--divider);
+}
+.setting-row:last-child {
+border-bottom: none;
+padding-bottom: 0;
+}
+.setting-row:first-child {
+padding-top: 0;
+}
+.setting-title {
+font-size: 12px;
+font-weight: 600;
+color: var(--text-heading);
+}
+.setting-sub {
+font-size: 10px;
+color: var(--text-secondary);
+margin-top: 1px;
+}
+.select-input {
+height: 30px;
+border-radius: 7px;
+border: 1px solid var(--border-strong);
+background: var(--surface-card);
+color: var(--text-heading);
+font-size: 11px;
+font-weight: 600;
+padding: 0 8px;
+outline: none;
+}
+.switch {
+width: 38px;
+height: 20px;
+border-radius: 999px;
+background: var(--surface-card);
+border: 1px solid var(--border-strong);
+position: relative;
+cursor: pointer;
+flex-shrink: 0;
+transition: background 0.15s;
+}
+.switch.checked {
+background: var(--primary);
+border-color: var(--primary);
+}
+.switch-thumb {
+width: 14px;
+height: 14px;
+border-radius: 50%;
+background: var(--text-secondary);
+position: absolute;
+top: 2px;
+left: 2px;
+transition: transform 0.15s, background 0.15s;
+}
+.switch.checked .switch-thumb {
+transform: translateX(18px);
+background: #ffffff;
+}
+/* Bottom 4-Segment Navigation Bar */
+.bottom-nav {
+height: 54px;
+background: var(--surface-panel);
+border-top: 1px solid var(--border);
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+padding: 4px 6px;
+gap: 4px;
+flex-shrink: 0;
+z-index: 20;
+}
+.nav-seg-btn {
+border: 1px solid transparent;
+background: transparent;
+border-radius: 10px;
+color: var(--text-secondary);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 2px;
+cursor: pointer;
+font-size: 10px;
+font-weight: 700;
+transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.nav-seg-btn svg {
+width: 16px;
+height: 16px;
+}
+.nav-seg-btn.active {
+background: rgba(59, 130, 246, 0.18);
+border-color: rgba(59, 130, 246, 0.45);
+color: var(--text-heading);
+}
+/* Legal Drawer Modal */
+.drawer-modal {
+position: absolute;
+inset: 0;
+background: rgba(2, 6, 23, 0.82);
+backdrop-filter: blur(8px);
+z-index: 50;
+display: none;
+flex-direction: column;
+padding: 14px;
+}
+.drawer-modal.open {
+display: flex;
+}
+.drawer-card {
+flex: 1;
+background: var(--surface-panel);
+border: 1px solid var(--border-strong);
+border-radius: 14px;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+}
+.drawer-head {
+padding: 12px 14px;
+border-bottom: 1px solid var(--divider);
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.drawer-body {
+flex: 1;
+padding: 12px 14px;
+overflow-y: auto;
+font-size: 11.5px;
+color: var(--text-body);
+line-height: 1.55;
+}
+@keyframes quicksilverGoldPulse {
+0%, 100% {
+background-position: 0% 50%;
+filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.55)) drop-shadow(0 0 10px rgba(245, 158, 11, 0.35));
+}
+50% {
+background-position: 100% 50%;
+filter: drop-shadow(0 0 6px rgba(253, 224, 71, 0.8)) drop-shadow(0 0 14px rgba(245, 158, 11, 0.5));
+}
+}
+@keyframes quicksilverGoldPulseLight {
+0%, 100% {
+background-position: 0% 50%;
+filter: drop-shadow(0 1px 3px rgba(217, 119, 6, 0.32)) drop-shadow(0 0 7px rgba(245, 158, 11, 0.25));
+}
+50% {
+background-position: 100% 50%;
+filter: drop-shadow(0 1px 5px rgba(180, 83, 9, 0.48)) drop-shadow(0 0 11px rgba(245, 158, 11, 0.38));
+}
+}
+.quicksilver-gold-glow {
+display: inline-block;
+font-weight: 900;
+letter-spacing: 0.07em;
+text-transform: uppercase;
+background: linear-gradient(90deg, #fde047 0%, #fbbf24 30%, #fef08a 50%, #f59e0b 75%, #fde047 100%);
+background-size: 200% auto;
+color: #fbbf24;
+-webkit-background-clip: text;
+background-clip: text;
+-webkit-text-fill-color: transparent;
+animation: quicksilverGoldPulse 3.2s ease-in-out infinite;
+}
+[data-theme="light"] .quicksilver-gold-glow {
+background: linear-gradient(90deg, #92400e 0%, #d97706 30%, #b45309 55%, #f59e0b 80%, #92400e 100%);
+background-size: 200% auto;
+color: #b45309;
+-webkit-background-clip: text;
+background-clip: text;
+-webkit-text-fill-color: transparent;
+animation: quicksilverGoldPulseLight 3.2s ease-in-out infinite;
+}
+.quicksilver-gold-badge {
+font-size: 10px;
+font-weight: 800;
+padding: 5px 10px;
+border-radius: 999px;
+background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(180, 83, 9, 0.22));
+border: 1px solid rgba(251, 191, 36, 0.48);
+box-shadow: 0 0 12px rgba(245, 158, 11, 0.18);
+display: inline-flex;
+align-items: center;
+gap: 5px;
+white-space: nowrap;
+flex-shrink: 0;
+user-select: none;
+}
+[data-theme="light"] .quicksilver-gold-badge {
+background: linear-gradient(135deg, rgba(254, 243, 199, 0.96), rgba(253, 230, 138, 0.72));
+border: 1px solid rgba(217, 119, 6, 0.55);
+box-shadow: 0 2px 8px rgba(217, 119, 6, 0.15);
+}
+.about-gcs-btn {
+width: 100%;
+padding: 8.5px 11px;
+border-radius: 10px;
+border: 1px solid rgba(56, 189, 248, 0.5);
+border-left: 3.5px solid #00c8ff;
+background: linear-gradient(135deg, rgba(12, 32, 62, 0.96) 0%, rgba(15, 23, 42, 0.96) 65%, rgba(30, 41, 59, 0.92) 100%);
+color: #f8fafc;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 10px;
+box-shadow: 0 4px 14px rgba(0, 200, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+transition: transform 0.14s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.about-gcs-btn:hover {
+transform: translateY(-1px);
+border-color: rgba(0, 200, 255, 0.85);
+box-shadow: 0 6px 18px rgba(0, 200, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+[data-theme="light"] .about-gcs-btn {
+border: 1px solid rgba(2, 132, 199, 0.45);
+border-left: 3.5px solid #0284c7;
+background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 58%, #fef3c7 100%);
+color: #0f172a;
+box-shadow: 0 4px 14px rgba(2, 132, 199, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+[data-theme="light"] .about-gcs-btn:hover {
+border-color: #0284c7;
+box-shadow: 0 6px 18px rgba(2, 132, 199, 0.22), inset 0 1px 0 #ffffff;
+}
+.about-gcs-left {
+display: flex;
+align-items: center;
+gap: 9px;
+min-width: 0;
+text-align: left;
+}
+.about-gcs-emblem {
+width: 26px;
+height: 26px;
+border-radius: 50%;
+object-fit: cover;
+border: 1.5px solid rgba(245, 158, 11, 0.65);
+box-shadow: 0 0 8px rgba(245, 158, 11, 0.28);
+flex-shrink: 0;
+}
+.about-gcs-title {
+font-size: 11.5px;
+font-weight: 800;
+letter-spacing: 0.15px;
+color: #f8fafc;
+line-height: 1.2;
+}
+[data-theme="light"] .about-gcs-title {
+color: #0f172a;
+}
+.about-gcs-sub {
+font-size: 9.5px;
+font-weight: 600;
+color: #7dd3fc;
+margin-top: 1px;
+line-height: 1.2;
+}
+[data-theme="light"] .about-gcs-sub {
+color: #0369a1;
+}
+.about-gcs-cta {
+display: inline-flex;
+align-items: center;
+gap: 4px;
+padding: 3.5px 8px;
+border-radius: 999px;
+background: rgba(0, 200, 255, 0.16);
+border: 1px solid rgba(0, 200, 255, 0.42);
+color: #38bdf8;
+font-size: 9px;
+font-weight: 800;
+letter-spacing: 0.4px;
+text-transform: uppercase;
+flex-shrink: 0;
+}
+[data-theme="light"] .about-gcs-cta {
+background: rgba(2, 132, 199, 0.14);
+border-color: rgba(2, 132, 199, 0.38);
+color: #0369a1;
+}
+.about-gcs-cta svg {
+width: 11px;
+height: 11px;
+}
+/* About Garuda Cyber Shield Modal Card (Dark + Light Mode) */
+.gcs-header-link {
+color: #00c8ff;
+text-decoration: none;
+display: inline-flex;
+align-items: center;
+gap: 4px;
+}
+[data-theme="light"] .gcs-header-link {
+color: #0284c7;
+}
+.gcs-modal-hero {
+background: radial-gradient(circle at 50% 14%, #0c2d48 0%, #071324 55%, #05080f 100%);
+border: 1px solid rgba(0, 200, 255, 0.34);
+border-radius: 15px;
+padding: 20px 16px 18px 16px;
+text-align: center;
+box-shadow: 0 10px 28px rgba(2, 6, 23, 0.55);
+}
+[data-theme="light"] .gcs-modal-hero {
+background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 46%, #f8fafc 100%);
+border: 1px solid rgba(2, 132, 199, 0.35);
+box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+.gcs-emblem-link {
+display: inline-block;
+text-decoration: none;
+}
+.gcs-emblem-img {
+width: 86px;
+height: 86px;
+border-radius: 50%;
+object-fit: cover;
+border: 2px solid rgba(245, 158, 11, 0.72);
+box-shadow: 0 0 26px rgba(245, 158, 11, 0.32), 0 0 12px rgba(0, 200, 255, 0.25);
+margin-bottom: 10px;
+}
+[data-theme="light"] .gcs-emblem-img {
+border-color: rgba(217, 119, 6, 0.78);
+box-shadow: 0 6px 20px rgba(217, 119, 6, 0.24);
+}
+.gcs-hero-title {
+font-size: 16.5px;
+font-weight: 900;
+letter-spacing: 0.08em;
+color: #ffffff;
+text-transform: uppercase;
+}
+[data-theme="light"] .gcs-hero-title {
+color: #0f172a;
+}
+.gcs-hero-tagline {
+display: inline-block;
+font-size: 10.5px;
+font-weight: 700;
+color: #38bdf8;
+background: rgba(0, 200, 255, 0.12);
+border: 1px solid rgba(0, 200, 255, 0.28);
+padding: 3.5px 11px;
+border-radius: 999px;
+margin-top: 7px;
+margin-bottom: 15px;
+}
+[data-theme="light"] .gcs-hero-tagline {
+color: #0369a1;
+background: rgba(2, 132, 199, 0.12);
+border-color: rgba(2, 132, 199, 0.3);
+}
+.gcs-mission-card {
+text-align: center;
+background: #080d18;
+border: 1px solid rgba(255, 255, 255, 0.12);
+border-top: 3px solid #f59e0b;
+border-radius: 12px;
+padding: 15px 14px 14px 14px;
+}
+[data-theme="light"] .gcs-mission-card {
+background: #ffffff;
+border: 1px solid rgba(148, 163, 184, 0.35);
+border-top: 3px solid #d97706;
+box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+.gcs-mission-heading {
+font-size: 11px;
+font-weight: 900;
+letter-spacing: 0.09em;
+color: #ffffff;
+margin-bottom: 10px;
+text-transform: uppercase;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 6px;
+}
+[data-theme="light"] .gcs-mission-heading {
+color: #0f172a;
+}
+.gcs-mission-slash {
+color: #f59e0b;
+font-weight: 900;
+}
+[data-theme="light"] .gcs-mission-slash {
+color: #d97706;
+}
+.gcs-mission-text {
+font-size: 11.5px;
+line-height: 1.7;
+color: #cbd5e1;
+margin-bottom: 12px;
+text-align: center;
+}
+[data-theme="light"] .gcs-mission-text {
+color: #334155;
+}
+.gcs-mission-link {
+color: #00c8ff;
+font-weight: 700;
+text-decoration: none;
+border-bottom: 1px solid rgba(0, 200, 255, 0.45);
+}
+[data-theme="light"] .gcs-mission-link {
+color: #0284c7;
+border-bottom-color: rgba(2, 132, 199, 0.45);
+}
+.gcs-mission-quote {
+font-size: 11px;
+font-style: italic;
+font-weight: 600;
+line-height: 1.58;
+color: #38bdf8;
+text-align: center;
+border-top: 1px solid rgba(255, 255, 255, 0.08);
+padding-top: 10px;
+}
+[data-theme="light"] .gcs-mission-quote {
+color: #0369a1;
+border-top-color: rgba(148, 163, 184, 0.28);
+}
+</style>
+</head>
+<body>
+<header class="top-header">
+<div class="brand-wrap">
+<img src="garuda-favicon.svg" alt="Garuda Infinity" class="brand-logo" id="brandLogo" />
+<div>
+<div class="brand-title">GARUDA INFINITY</div>
+<div class="brand-sub" id="extHeaderVersionSub">Standalone Extension V1.0.2</div>
+</div>
+</div>
+<div class="header-actions">
+<span id="headerStatusBadge" class="status-pill status-off">UNPROTECTED</span>
+<button id="themeToggleBtn" class="icon-btn" title="Toggle Dark / Light Theme">
+<svg id="themeIconSvg" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="12" cy="12" r="4" />
+<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+</svg>
+</button>
+<button id="openFull3dBtn" class="icon-btn" title="Open Full-Screen 3D Globe Dashboard">
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<polyline points="15 3 21 3 21 9" />
+<polyline points="9 21 3 21 3 15" />
+<line x1="21" y1="3" x2="14" y2="10" />
+<line x1="3" y1="21" x2="10" y2="14" />
+</svg>
+</button>
+</div>
+</header>
+<div id="extUpdateBanner" style="display: none; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 12px; background: rgba(245, 158, 11, 0.16); border-bottom: 1px solid rgba(245, 158, 11, 0.38); font-size: 11px; font-weight: 700; color: #fbbf24">
+<span id="extUpdateBannerText">Update Available</span>
+<div style="display: flex; gap: 6px; flex-shrink: 0">
+<button id="extUpdateDownloadBtn" class="btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px; color: #fbbf24; border-color: rgba(245, 158, 11, 0.5)">Download</button>
+<button id="extUpdateReloadBannerBtn" class="btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px">Reload</button>
+</div>
+</div>
+<main class="segment-viewport">
+<section id="seg-tunnel" class="segment-pane active">
+<div class="tunnel-stage">
+<canvas id="globeCanvas" width="410" height="496"></canvas>
+<div class="hud-top-row">
+<div class="route-bar">
+<div class="route-endpoint">
+<img id="originFlag" src="resources/icons/flags/ic_flag_bd.webp" alt="Origin" class="route-flag" />
+<div class="route-meta">
+<span id="originLabel" class="route-label">Origin (BD)</span>
+<span id="originIp" class="route-ip">165.101.79.231</span>
+</div>
+</div>
+<span id="routeArrow" style="color: #64748b; display: inline-flex; align-items: center">
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<line x1="5" y1="12" x2="19" y2="12" />
+<polyline points="12 5 19 12 12 19" />
+</svg>
+</span>
+<div class="route-endpoint">
+<img id="exitFlag" src="resources/icons/flags/ic_flag_us.webp" alt="Exit" class="route-flag" />
+<div class="route-meta">
+<span id="exitLabel" class="route-label" style="color: #fb7185">Direct IP</span>
+<span id="exitIp" class="route-ip">165.101.79.231</span>
+</div>
+</div>
+<button id="quickVerifyBtn" class="verify-mini-btn">Verify</button>
+</div>
+</div>
+<div class="connect-console">
+<div class="hero-btn-wrap">
+<img
+id="heroRingImg"
+src="resources/Screens/S4_MainLayout/Main/assets/connect-button-bg.svg"
+alt=""
+class="hero-ring-img pulse-halo"
+/>
+<button id="connectHeroBtn" class="hero-core-btn" title="Connect / Disconnect VPN">
+<img
+id="connectHeroIcon"
+src="resources/Screens/S4_MainLayout/Main/assets/connect-button-start-rest.svg"
+alt="Connect"
+/>
+</button>
+</div>
+<div class="console-status-row">
+<span id="statusDot" class="status-dot"></span>
+<span id="statusHeadline" class="console-headline">Not connected</span>
+</div>
+<div class="telemetry-row">
+<span id="timerText" class="timer-text">00:00:00</span>
+<span>•</span>
+<span style="color: #38bdf8; display: inline-flex; align-items: center; gap: 3px">
+<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+<span id="rxText">0.0 KB</span>
+</span>
+<span style="color: #34d399; display: inline-flex; align-items: center; gap: 3px">
+<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+<span id="txText">0.0 KB</span>
+</span>
+</div>
+<button id="selectedCountryCard" class="target-country-btn" title="Click to choose another country">
+<div class="target-left">
+<img id="selectedCountryFlag" src="resources/icons/flags/ic_flag_us.webp" alt="US" class="target-flag" />
+<div>
+<div id="selectedCountryName" class="target-name">United States</div>
+<div id="selectedCountrySub" class="target-sub">New York, NY • Click to switch country</div>
+</div>
+</div>
+<div class="target-right">
+<span id="selectedCountry4k" class="tag-4k">4K</span>
+<span id="selectedCountryPing" class="ping-badge">42 ms</span>
+</div>
+</button>
+<div class="console-footer">
+<span>Protocol: <strong id="activeProtocolFooter" style="color: var(--text-body)">Garuda LinkX (Auto)</strong></span>
+<button id="expandDashboardLink" class="link-btn" style="display: inline-flex; align-items: center; gap: 4px">
+<span>Full 3D Dashboard</span>
+<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+<polyline points="15 3 21 3 21 9" />
+<line x1="10" y1="14" x2="21" y2="3" />
+</svg>
+</button>
+</div>
+</div>
+</div>
+</section>
+<section id="seg-countries" class="segment-pane">
+<div class="countries-header">
+<div class="countries-top-bar">
+<div>
+<div class="countries-title">Global Server Gateways</div>
+<div style="font-size: 10px; color: var(--text-secondary)">Click any country to connect &amp; switch exit IP</div>
+</div>
+<span id="catalogToggleBtn" class="catalog-toggle-btn" style="display: inline-flex; align-items: center; gap: 5px; cursor: default; pointer-events: none; user-select: none">
+<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<circle cx="12" cy="12" r="10" />
+<path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+</svg>
+<span id="catalogToggleText">82 Official</span>
+</span>
+</div>
+<div class="search-box">
+<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-secondary); flex-shrink: 0">
+<circle cx="11" cy="11" r="8" />
+<line x1="21" y1="21" x2="16.65" y2="16.65" />
+</svg>
+<input id="countrySearchInput" type="text" placeholder="Search country, city, or ISO code..." />
+<button id="clearSearchBtn" class="clear-search-btn" title="Clear search">
+<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+<line x1="18" y1="6" x2="6" y2="18" />
+<line x1="6" y1="6" x2="18" y2="18" />
+</svg>
+</button>
+</div>
+<div class="mode-tabs">
+<button id="tabAllServers" class="mode-tab active">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+</svg>
+<span id="tabAllServersText">All Servers (82)</span>
+</button>
+<button id="tabStreamingServers" class="mode-tab">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<rect width="20" height="15" x="2" y="7" rx="2" ry="2" />
+<polyline points="17 2 12 7 7 2" />
+</svg>
+<span id="tabStreamingServersText">Streaming &amp; 4K (36)</span>
+</button>
+</div>
+<div class="region-pills">
+<button class="region-pill active" data-region="ALL">All Regions</button>
+<button class="region-pill" data-region="America">Americas</button>
+<button class="region-pill" data-region="Europe, Middle East & Africa">Europe &amp; MEA</button>
+<button class="region-pill" data-region="Asia & Oceania">Asia &amp; Oceania</button>
+</div>
+</div>
+<div id="countriesListContainer" class="countries-list"></div>
+</section>
+<section id="seg-ipconfig" class="segment-pane">
+<div class="ipconfig-header">
+<div class="sub-tabs">
+<button class="sub-tab active" data-subtab="telemetry">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+<path d="m9 12 2 2 4-4" />
+</svg>
+<span>Live IP &amp; ASN</span>
+</button>
+<button class="sub-tab" data-subtab="logs">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<polyline points="4 17 10 11 4 5" />
+<line x1="12" y1="19" x2="20" y2="19" />
+</svg>
+<span>Activity Logs</span>
+</button>
+</div>
+</div>
+<div class="pane-body">
+<div id="subpane-telemetry" style="display: flex; flex-direction: column; gap: 10px">
+<div class="glass-card">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px">
+<span class="card-label" style="margin-bottom: 0">Active Browser Public IP</span>
+<span id="ipProtectedTag" class="status-pill status-off">DIRECT ISP</span>
+</div>
+<div class="ip-hero-banner">
+<div class="ip-hero-left">
+<img id="telemetryFlag" src="resources/icons/flags/ic_flag_us.webp" alt="" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border-strong)" />
+<div style="min-width: 0">
+<div id="telemetryIp" style="font-size: 16.5px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1.15">—</div>
+<div id="telemetryLocation" style="font-size: 11px; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">—</div>
+</div>
+</div>
+<div class="ip-time-pill">
+<div class="ip-time-label">Location Time</div>
+<div id="telemetryLocalTime" class="ip-time-value">—</div>
+<div id="telemetryTimezone" class="ip-time-zone">—</div>
+</div>
+</div>
+<div class="kv-grid">
+<div class="kv-box">
+<span class="k">ISP / Carrier</span>
+<span id="telemetryIsp" class="v">—</span>
+</div>
+<div class="kv-box">
+<span class="k">ASN Network</span>
+<span id="telemetryAsn" class="v">—</span>
+</div>
+<div class="kv-box">
+<span class="k">DNS Resolvers</span>
+<span id="telemetryDns" class="v">1.1.1.1, 1.0.0.1</span>
+</div>
+<div class="kv-box">
+<span class="k">Origin Real IP</span>
+<span id="telemetryOrigin" class="v">—</span>
+</div>
+</div>
+</div>
+<div class="glass-card">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 9px">
+<div>
+<div style="font-size: 12px; font-weight: 700">Live Tunnel &amp; Route Verification</div>
+<div style="font-size: 10px; color: var(--text-secondary)">Encrypted exit-node &amp; leak protection audit</div>
+</div>
+<button id="verifyIpFullBtn" class="btn-primary">
+<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+<path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+<path d="M3 3v5h5" />
+<path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+<path d="M16 16h5v5" />
+</svg>
+<span id="verifyIpBtnText">Verify IP Now</span>
+</button>
+</div>
+<div class="kv-grid">
+<div class="kv-box">
+<span class="k">Tunnel Route Status</span>
+<span id="verifyRouteStatus" class="v">Direct ISP Route</span>
+</div>
+<div class="kv-box">
+<span class="k">Transport Cipher</span>
+<span id="verifyCipherStatus" class="v">TLS 1.3 • AES-256-GCM</span>
+</div>
+<div class="kv-box">
+<span class="k">DNS &amp; WebRTC Shield</span>
+<span id="verifyLeakStatus" class="v">Zero-Leak Protected</span>
+</div>
+<div class="kv-box">
+<span class="k">Exit Geo Coordinates</span>
+<span id="verifyCoordsStatus" class="v">—</span>
+</div>
+</div>
+<div id="verifyStatusBanner" class="verify-status-banner">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+<path d="m9 12 2 2 4-4" />
+</svg>
+<span id="verifyStatusText">Click "Verify IP Now" to audit live exit-node routing and leak protection.</span>
+</div>
+</div>
+</div>
+<div id="subpane-logs" style="display: none; flex-direction: column; gap: 10px">
+<div class="glass-card">
+<div class="logs-toolbar">
+<div class="logs-title-group">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<polyline points="4 17 10 11 4 5" />
+<line x1="12" y1="19" x2="20" y2="19" />
+</svg>
+<span class="card-label" style="margin-bottom: 0">Engine Activity Logs</span>
+<span id="logsCountBadge" class="logs-count-pill">0 Events</span>
+</div>
+<button id="clearLogsBtn" class="logs-clear-btn" title="Clear activity logs">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<polyline points="3 6 5 6 21 6" />
+<path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+</svg>
+<span>Clear</span>
+</button>
+</div>
+<div class="logs-filter-bar">
+<button class="log-filter-pill active" data-logfilter="ALL">All Events</button>
+<button class="log-filter-pill" data-logfilter="TUNNEL">Tunnel</button>
+<button class="log-filter-pill" data-logfilter="VERIFY">IP Verify</button>
+<button class="log-filter-pill" data-logfilter="SYSTEM">System</button>
+</div>
+<div id="engineLogsList" class="logs-list"></div>
+</div>
+</div>
+</div>
+</section>
+<section id="seg-settings" class="segment-pane">
+<div class="pane-body">
+<div class="glass-card">
+<div class="card-label">Extension Tunnel &amp; Startup</div>
+<div class="setting-row">
+<div>
+<div class="setting-title">VPN Protocol</div>
+<div class="setting-sub">LinkX WireGuard or OpenVPN</div>
+</div>
+<select id="protocolSelect" class="select-input">
+<option value="Auto">Auto (LinkX)</option>
+<option value="WireGuard">WireGuard (LinkX)</option>
+<option value="OpenVPN_UDP">OpenVPN (UDP)</option>
+<option value="OpenVPN_TCP">OpenVPN (TCP)</option>
+</select>
+</div>
+<div class="setting-row">
+<div>
+<div class="setting-title">Auto-Connect on Startup</div>
+<div class="setting-sub">Connect on browser launch</div>
+</div>
+<div id="switchAutoStartup" class="switch"><div class="switch-thumb"></div></div>
+</div>
+<div class="setting-row">
+<div>
+<div class="setting-title">Dynamic IP Rotation</div>
+<div id="dynamicIpSubText" class="setting-sub">New exit IP on every connect</div>
+</div>
+<button id="btnDynamicIpToggle" type="button" class="status-pill status-on" style="flex-shrink:0; cursor:pointer; user-select:none" title="Click to toggle Dynamic IP Rotation (Active / Deactive)">ACTIVE</button>
+</div>
+</div>
+<div class="glass-card">
+<div class="card-label">Appearance &amp; 3D View</div>
+<div class="setting-row">
+<div>
+<div class="setting-title">Interface Theme</div>
+<div id="themeLabelSub" class="setting-sub">Dark Cyber Glass</div>
+</div>
+<button id="settingsThemeBtn" class="btn-secondary">Switch Theme</button>
+</div>
+<div class="setting-row">
+<div>
+<div class="setting-title">3D Camera View</div>
+<div class="setting-sub">Default 3D globe mode</div>
+</div>
+<select id="cameraSelect" class="select-input">
+<option value="globe">3D Globe</option>
+<option value="shield">3D Shield</option>
+<option value="orbit">Auto-Orbit</option>
+</select>
+</div>
+</div>
+<div class="glass-card" style="padding: 15px 14px">
+<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px">
+<div style="display: flex; align-items: center; gap: 10px">
+<img src="garuda-favicon.svg" alt="" style="width: 32px; height: 32px" />
+<div>
+<div id="extAboutVersionTitle" style="font-size: 13.5px; font-weight: 800">Garuda Infinity V1.0.2</div>
+<div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px">Standalone Browser VPN</div>
+</div>
+</div>
+<span class="quicksilver-gold-badge" title="Lead Developer">
+<span class="quicksilver-gold-glow">QUICKSILVER</span>
+</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 11px 0; margin-bottom: 11px; border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider)">
+<div>
+<div class="setting-title">Extension Auto-Update</div>
+<div id="extUpdateStatusSub" class="setting-sub">OTA Sync Active • Up to date</div>
+</div>
+<div style="display: flex; gap: 6px; flex-shrink: 0">
+<button id="checkExtUpdateBtn" class="btn-secondary" style="height: 28px; padding: 0 9px">Check Update</button>
+<button id="reloadExtRuntimeBtn" class="btn-secondary" style="height: 28px; padding: 0 9px" title="Reload extension runtime after extracting update">Reload</button>
+</div>
+</div>
+<button id="openAboutGcsBtn" class="about-gcs-btn" style="margin-bottom: 11px; padding: 10px 12px">
+<div class="about-gcs-left">
+<img src="gcs-logo.png" alt="GCS" class="about-gcs-emblem" style="width: 30px; height: 30px" />
+<div>
+<div class="about-gcs-title" style="font-size: 12.5px">About Garuda Cyber Shield</div>
+<div class="about-gcs-sub" style="font-size: 10px">Official Cyber Defense &amp; Mission Briefing</div>
+</div>
+</div>
+<span class="about-gcs-cta">
+<span>Briefing</span>
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+<polyline points="9 18 15 12 9 6" />
+</svg>
+</span>
+</button>
+<div style="display: flex; gap: 8px">
+<button id="openTermsBtn" class="btn-secondary" style="flex: 1; height: 32px">Terms of Service</button>
+<button id="openPrivacyBtn" class="btn-secondary" style="flex: 1; height: 32px">Privacy Policy</button>
+</div>
+</div>
+<div class="glass-card" style="text-align: center; padding: 10px 12px">
+<div style="font-size: 10.5px; font-weight: 700; color: var(--text-heading)">© 2026 Garuda Cyber Shield. All Rights Reserved.</div>
+</div>
+</div>
+</section>
+</main>
+<div id="legalDrawer" class="drawer-modal">
+<div class="drawer-card">
+<div class="drawer-head">
+<strong id="drawerTitle" style="font-size: 13px">Terms of Service</strong>
+<button id="closeDrawerBtn" class="btn-secondary" style="height: 26px; padding: 0 8px">Close</button>
+</div>
+<div id="drawerBody" class="drawer-body"></div>
+</div>
+</div>
+<nav class="bottom-nav" aria-label="Extension Segments">
+<button class="nav-seg-btn active" data-seg="tunnel">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+</svg>
+<span>Tunnel</span>
+</button>
+<button class="nav-seg-btn" data-seg="countries">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+<circle cx="12" cy="12" r="10" />
+<path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+</svg>
+<span>Countries</span>
+</button>
+<button class="nav-seg-btn" data-seg="ipconfig">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+<polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+</svg>
+<span>IP &amp; Log</span>
+</button>
+<button class="nav-seg-btn" data-seg="settings">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+<circle cx="12" cy="12" r="3" />
+<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+</svg>
+<span>Settings</span>
+</button>
+</nav>
+<div id="forceUpdateLockOverlay" style="display: none; position: fixed; inset: 0; z-index: 9999; background: radial-gradient(circle at 50% 25%, rgba(30, 58, 138, 0.96), rgba(3, 7, 18, 0.99)); backdrop-filter: blur(18px); flex-direction: column; align-items: center; justify-content: center; padding: 26px 22px; text-align: center">
+<div style="width: 100%; max-width: 356px; background: rgba(15, 23, 42, 0.92); border: 1px solid rgba(239, 68, 68, 0.45); border-radius: 20px; padding: 24px 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7)">
+<img src="garuda-favicon.svg" alt="Garuda Infinity" style="width: 56px; height: 56px; margin-bottom: 12px; filter: drop-shadow(0 0 16px rgba(59, 130, 246, 0.65))" />
+<div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(239, 68, 68, 0.18); border: 1px solid rgba(239, 68, 68, 0.45); color: #f87171; font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px">
+<span>MANDATORY VERSION UPDATE</span>
+</div>
+<div id="forceUpdateTitleText" style="font-size: 17px; font-weight: 800; color: #f8fafc; margin-bottom: 8px; line-height: 1.25">Mandatory Update Required</div>
+<p id="forceUpdateMsgText" style="font-size: 12px; line-height: 1.6; color: #cbd5e1; margin-bottom: 14px">
+A critical update with new features and security enhancements is required to continue using Garuda Infinity. Please update to the latest version now.
+</p>
+<div id="forceUpdateVersionCompare" style="font-size: 11px; font-weight: 700; color: #38bdf8; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; padding: 8px 12px; margin-bottom: 16px"></div>
+<button id="forceUpdateActionBtn" class="btn-primary" style="width: 100%; height: 40px; justify-content: center; font-size: 12.5px; font-weight: 800; border-radius: 11px; margin-bottom: 8px">
+Update to Latest Version Now
+</button>
+<button id="forceUpdateRecheckBtn" class="btn-secondary" style="width: 100%; height: 32px; justify-content: center; font-size: 11px; border-radius: 9px">
+Verify Update Status
+</button>
+</div>
+</div>
+<script src="popup.js"></script>
+</body>
+</html>

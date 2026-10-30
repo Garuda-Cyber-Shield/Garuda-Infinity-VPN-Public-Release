@@ -1,0 +1,21 @@
+{
+  "version": "1.0.2",
+  "appVersion": "1.0.2",
+  "extensionVersion": "1.0.2",
+  "versionCode": 1002,
+  "releaseDate": "2026-10-30",
+  "forceUpdate": false,
+  "forceUpdateApp": false,
+  "forceUpdateExtension": false,
+  "minSupportedVersion": "",
+  "minSupportedAppVersion": "",
+  "minSupportedExtensionVersion": "",
+  "forceUpdateTitle": "Mandatory Update Required",
+  "forceUpdateMessage": "A critical update with new features and security enhancements is required to continue using Garuda Infinity. Please update to the latest version now.",
+  "publicRepoUrl": "https://github.com/Garuda-Cyber-Shield/Garuda-Infinity-VPN-Public-Release.git",
+  "extensionZipUrl": "https://raw.githubusercontent.com/Garuda-Cyber-Shield/Garuda-Infinity-VPN-Public-Release/main/Garuda-Infinity-Extension.zip",
+  "extensionDownloadFileName": "Garuda-Infinity-Extension.zip",
+  "apkUrl": "https://raw.githubusercontent.com/Garuda-Cyber-Shield/Garuda-Infinity-VPN-Public-Release/main/Garuda-Infinity.apk",
+  "apkDownloadFileName": "Garuda-Infinity.apk",
+  "notes": "Garuda Infinity V1.0.2 Official Release — Garuda Cyber Shield."
+}
