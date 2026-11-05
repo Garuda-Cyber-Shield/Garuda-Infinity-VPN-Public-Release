@@ -709,6 +709,160 @@ color: #34d399;
 background: rgba(16, 185, 129, 0.18);
 color: #047857;
 }
+/* Multi-City Selector Strip & Country Cities Drawer */
+.ext-city-strip {
+width: 100%;
+margin-top: 6px;
+padding: 6px 8px;
+border-radius: 9px;
+background: rgba(15, 23, 42, 0.55);
+border: 1px solid var(--border);
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+[data-theme="light"] .ext-city-strip {
+background: rgba(241, 245, 249, 0.85);
+}
+.ext-city-strip-header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+font-size: 9.5px;
+font-weight: 700;
+color: var(--text-secondary);
+}
+.ext-city-chips-row {
+display: flex;
+flex-wrap: wrap;
+gap: 4px;
+max-height: 54px;
+overflow-y: auto;
+}
+.ext-city-chip {
+height: 22px;
+padding: 0 7px;
+border-radius: 6px;
+border: 1px solid var(--border);
+background: var(--surface-card);
+color: var(--text-secondary);
+font-size: 9.5px;
+font-weight: 600;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+gap: 4px;
+transition: all 0.14s ease;
+}
+.ext-city-chip:hover {
+border-color: var(--primary);
+color: var(--text-heading);
+}
+.ext-city-chip.active {
+border-color: rgba(59, 130, 246, 0.65);
+background: rgba(59, 130, 246, 0.22);
+color: #93c5fd;
+font-weight: 700;
+}
+[data-theme="light"] .ext-city-chip.active {
+background: rgba(37, 99, 235, 0.15);
+color: #1d4ed8;
+}
+.ext-city-chip.connected {
+border-color: rgba(16, 185, 129, 0.65);
+background: rgba(16, 185, 129, 0.2);
+color: #6ee7b7;
+font-weight: 700;
+}
+[data-theme="light"] .ext-city-chip.connected {
+background: rgba(16, 185, 129, 0.16);
+color: #047857;
+}
+.country-group-wrap {
+display: flex;
+flex-direction: column;
+margin-bottom: 4px;
+}
+.country-group-wrap .country-row {
+margin-bottom: 0;
+}
+.country-group-wrap.expanded .country-row {
+border-bottom-left-radius: 0;
+border-bottom-right-radius: 0;
+}
+.country-cities-toggle {
+height: 23px;
+padding: 0 7px;
+border-radius: 6px;
+border: 1px solid var(--border);
+background: var(--surface-card);
+color: var(--text-secondary);
+font-size: 9.5px;
+font-weight: 700;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+gap: 3px;
+margin-right: 5px;
+flex-shrink: 0;
+}
+.country-cities-toggle.expanded {
+border-color: rgba(56, 189, 248, 0.55);
+background: rgba(56, 189, 248, 0.16);
+color: #38bdf8;
+}
+[data-theme="light"] .country-cities-toggle.expanded {
+color: #0284c7;
+background: rgba(2, 132, 199, 0.12);
+}
+.country-cities-drawer {
+background: rgba(8, 15, 32, 0.72);
+border: 1px solid var(--border);
+border-top: none;
+border-bottom-left-radius: 10px;
+border-bottom-right-radius: 10px;
+padding: 6px 8px 7px 11px;
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+[data-theme="light"] .country-cities-drawer {
+background: rgba(241, 245, 249, 0.9);
+}
+.city-sub-row {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 5px 8px;
+border-radius: 7px;
+border: 1px solid var(--border);
+background: var(--surface-card);
+cursor: pointer;
+transition: all 0.13s ease;
+}
+.city-sub-row:hover {
+border-color: var(--primary);
+}
+.city-sub-row.selected {
+border-color: rgba(59, 130, 246, 0.55);
+background: rgba(59, 130, 246, 0.15);
+}
+.city-sub-row.connected {
+border-color: rgba(16, 185, 129, 0.55);
+background: rgba(16, 185, 129, 0.15);
+}
+.city-default-tag {
+font-size: 8px;
+font-weight: 700;
+padding: 1px 4px;
+border-radius: 3px;
+background: rgba(16, 185, 129, 0.18);
+color: #34d399;
+margin-left: 4px;
+}
+[data-theme="light"] .city-default-tag {
+color: #047857;
+}
 /* Segment 3 & 4 Cards */
 #seg-ipconfig {
 overflow: hidden;
@@ -1619,7 +1773,7 @@ border-top-color: rgba(148, 163, 184, 0.28);
 <img src="garuda-favicon.svg" alt="Garuda Infinity" class="brand-logo" id="brandLogo" />
 <div>
 <div class="brand-title">GARUDA INFINITY</div>
-<div class="brand-sub" id="extHeaderVersionSub">Standalone Extension V1.1.1</div>
+<div class="brand-sub" id="extHeaderVersionSub">Standalone Extension V1.2.2</div>
 </div>
 </div>
 <div class="header-actions">
@@ -1721,6 +1875,7 @@ alt="Connect"
 <span id="selectedCountryPing" class="ping-badge">42 ms</span>
 </div>
 </button>
+<div id="selectedCountryCitiesBar" class="ext-city-strip"></div>
 <div class="console-footer">
 <span>Protocol: <strong id="activeProtocolFooter" style="color: var(--text-body)">Garuda LinkX (Auto)</strong></span>
 <button id="expandDashboardLink" class="link-btn" style="display: inline-flex; align-items: center; gap: 4px">
@@ -1975,7 +2130,7 @@ alt="Connect"
 <div style="display: flex; align-items: center; gap: 10px">
 <img src="garuda-favicon.svg" alt="" style="width: 32px; height: 32px" />
 <div>
-<div id="extAboutVersionTitle" style="font-size: 13.5px; font-weight: 800">Garuda Infinity V1.1.1</div>
+<div id="extAboutVersionTitle" style="font-size: 13.5px; font-weight: 800">Garuda Infinity V1.2.2</div>
 <div style="font-size: 10.5px; color: var(--text-secondary); margin-top: 1px">Standalone Browser VPN</div>
 </div>
 </div>
